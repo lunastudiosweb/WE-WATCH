@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>WE WATCH</title>
+  <link rel="stylesheet" href="css/base.css">
+</head>
+<body>
+  <main class="setup-page">
+    <h1 class="brand">WE WATCH</h1>
+    <p class="tagline">Phase 0: project setup check</p>
+
+    <div class="status-card">
+      <div class="status-row">
+        <span>Website files loaded</span>
+        <span class="badge badge-ok">OK</span>
+      </div>
+      <div class="status-row">
+        <span>Supabase connection</span>
+        <span id="supabase-status" class="badge badge-wait">Checking...</span>
+      </div>
+    </div>
+
+    <p id="supabase-help" class="help-text"></p>
+  </main>
+
+  <!-- Supabase library (loaded from a CDN, nothing to install) -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <!-- Our own files. Order matters: config first, then the client. -->
+  <script src="js/config.js"></script>
+  <script src="js/supabase-client.js"></script>
+
+  <script>
+    // Phase 0 only: check that config.js is filled in and Supabase answers.
+    (async function () {
+      var badge = document.getElementById("supabase-status");
+      var help = document.getElementById("supabase-help");
+
+      function show(text, cls, message) {
+        badge.textContent = text;
+        badge.className = "badge " + cls;
+        help.textContent = message || "";
+      }
+
+      if (WEWATCH_CONFIG.SUPABASE_URL.indexOf("PASTE_") === 0 ||
+          WEWATCH_CONFIG.SUPABASE_KEY.indexOf("PASTE_") === 0) {
+        show("Not configured", "badge-warn",
+          "Open js/config.js and paste your Supabase Project URL and publishable key (see README.md, step 3).");
+        return;
+      }
+
+      try {
+        var res = await fetch(WEWATCH_CONFIG.SUPABASE_URL + "/auth/v1/settings", {
+          headers: { apikey: WEWATCH_CONFIG.SUPABASE_KEY }
+        });
+        if (res.ok) {
+          show("Connected", "badge-ok", "Everything is ready for Phase 1 (the database).");
+        } else {
+          show("Rejected", "badge-error",
+            "Supabase answered but refused the key (status " + res.status + "). Re-copy the URL and key into js/config.js.");
+        }
+      } catch (e) {
+        show("Unreachable", "badge-error",
+          "Could not reach Supabase. Check the Project URL in js/config.js and your internet connection.");
+      }
+    })();
+  </script>
+</body>
+</html>
